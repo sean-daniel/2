@@ -1,0 +1,1513 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>多维大纲台2 · 色带与折线</title>
+<style>
+  :root {
+    --bg: #eef0f3; --shell: #f6f7f9; --surface: #ffffff; --surface-2: #f2f4f6;
+    --ink: #191c20; --muted: #5f6673; --line: #e1e4e9; --line-strong: #cbd1d9;
+    --accent: #0e7c66; --accent-soft: rgba(14, 124, 102, 0.10);
+    --danger: #b4362f; --danger-soft: rgba(180, 54, 47, 0.09);
+    --amber: #8a5a00; --blue: #2f5f9e; --violet: #6a4ea3;
+    --shadow: 0 12px 30px rgba(20, 26, 34, 0.10);
+    --branch-1: #0e7c66; --branch-2: #b07a1f; --branch-3: #3f6fb5;
+    --branch-4: #a24a6b; --branch-5: #2f8b8b; --branch-6: #7a5ea8;
+    --cat-1: #0e7c66; --cat-2: #b07a1f; --cat-3: #3f6fb5; --cat-4: #a24a6b;
+    --cat-5: #2f8b8b; --cat-6: #7a5ea8; --cat-7: #8a5a2f; --cat-8: #5f6673;
+    --era-ancient: #8a6430; --era-ancient-soft: #f0e6d2;
+    --era-ming: #2f5f9e; --era-ming-soft: #e3ebf7;
+    --era-qing: #146b5c; --era-qing-soft: #dff0eb;
+    --era-republic: #9c3d5c; --era-republic-soft: #f7e3ea;
+    --era-modern: #4b4f9e; --era-modern-soft: #e7e8f7;
+    --era-future: #0b6b78; --era-future-soft: #dceff2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1114; --shell: #16191e; --surface: #1c2026; --surface-2: #23272e;
+      --ink: #e8eaee; --muted: #98a0ac; --line: #2b3037; --line-strong: #3a4048;
+      --accent: #45d3b0; --accent-soft: rgba(69, 211, 176, 0.14);
+      --danger: #ef7b73; --danger-soft: rgba(239, 123, 115, 0.13);
+      --amber: #e0b25c; --blue: #7eb3ee; --violet: #b9a3ea;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      --branch-1: #45d3b0; --branch-2: #e0b25c; --branch-3: #7eb3ee;
+      --branch-4: #e79ab4; --branch-5: #6fc9d6; --branch-6: #b9a3ea;
+      --cat-1: #45d3b0; --cat-2: #e0b25c; --cat-3: #7eb3ee; --cat-4: #e79ab4;
+      --cat-5: #6fc9d6; --cat-6: #b9a3ea; --cat-7: #d9b271; --cat-8: #98a0ac;
+      --era-ancient: #d9b271; --era-ancient-soft: rgba(217, 178, 113, 0.16);
+      --era-ming: #8fb8ee; --era-ming-soft: rgba(143, 184, 238, 0.15);
+      --era-qing: #6fd0ba; --era-qing-soft: rgba(111, 208, 186, 0.15);
+      --era-republic: #e79ab4; --era-republic-soft: rgba(231, 154, 180, 0.15);
+      --era-modern: #a9adee; --era-modern-soft: rgba(169, 173, 238, 0.15);
+      --era-future: #6fc9d6; --era-future-soft: rgba(111, 201, 214, 0.15);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    font-size: 14px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  body.linking { cursor: crosshair; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 13px; flex-wrap: wrap;
+    padding: 10px 18px; background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 9px; font-weight: 600; white-space: nowrap; }
+  .brand-mark {
+    width: 24px; height: 24px; border-radius: 8px; background: var(--accent); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  @media (prefers-color-scheme: dark) { .brand-mark { color: #0d1512; } }
+  #projectTitle {
+    border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 4px 8px;
+    font-weight: 500; min-width: 150px; max-width: 280px;
+  }
+  #projectTitle:hover { border-color: var(--line); }
+  #projectTitle:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
+  .view-tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 11px; }
+  .view-tabs button {
+    appearance: none; border: 0; background: transparent; color: var(--muted);
+    padding: 6px 13px; border-radius: 8px; white-space: nowrap;
+  }
+  .view-tabs button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.10); }
+  .top-actions { margin-left: auto; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .btn {
+    appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 32px; padding: 0 12px; border-radius: 9px;
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+    white-space: nowrap; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 500; }
+  @media (prefers-color-scheme: dark) { .btn-primary { color: #0d1512; } }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+  .btn-ghost:hover { background: var(--surface-2); border-color: var(--line); color: var(--ink); }
+  .btn-danger:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+  .save-note { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; align-items: stretch; min-height: calc(100vh - 53px); }
+  .board { min-width: 0; padding: 14px 16px 30px; }
+  .board-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stats { color: var(--muted); font-size: 12.5px; }
+  .stats b { color: var(--ink); font-weight: 500; }
+  .legend { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 11.5px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .legend .lg-line { background: var(--accent); }
+  .legend .lg-free { border: 1px dashed var(--line-strong); }
+  .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-left: auto; }
+  .switch input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+  /* view 1: era bands + links */
+  .bands { position: relative; display: flex; flex-direction: column; gap: 9px; }
+  .traj { position: absolute; inset: 0; pointer-events: none; z-index: 20; overflow: visible; }
+  .traj .link-visible { fill: none; stroke-width: 2; pointer-events: none; }
+  .traj .link-hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; cursor: pointer; }
+  .traj .link-delete { opacity: 0; pointer-events: none; }
+  .traj .link:hover .link-delete { opacity: 1; pointer-events: auto; }
+  .traj .link-delete circle { fill: var(--surface); stroke: var(--line-strong); stroke-width: 1; }
+  .traj .link-delete path { stroke: var(--muted); stroke-width: 1.6; fill: none; }
+  .traj .temp-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 5; pointer-events: none; }
+
+  .band { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; pointer-events: none; }
+  .band-head { position: relative; z-index: 2; display: flex; align-items: baseline; gap: 9px; padding: 7px 12px 7px 36px; border-bottom: 1px solid var(--line); pointer-events: none; }
+  .band-head .era-name { font-size: 13.5px; font-weight: 500; }
+  .band-head .era-span { color: var(--muted); font-size: 11.5px; }
+  .band-head .era-count { margin-left: auto; color: var(--muted); font-size: 11.5px; }
+  .band-body { display: flex; flex-wrap: nowrap; gap: 0; padding: 28px 44px 28px 36px; min-height: 84px; align-items: flex-start; pointer-events: auto; overflow-x: auto; overflow-y: hidden; }
+  .flow-gap { flex: 0 0 auto; align-self: stretch; height: auto; }
+  .band-body.drop-active { background: var(--accent-soft); }
+  .band[data-era="ancient"] .band-head { background: var(--era-ancient-soft); }
+  .band[data-era="ming"] .band-head { background: var(--era-ming-soft); }
+  .band[data-era="qing"] .band-head { background: var(--era-qing-soft); }
+  .band[data-era="republic"] .band-head { background: var(--era-republic-soft); }
+  .band[data-era="modern"] .band-head { background: var(--era-modern-soft); }
+  .band[data-era="future"] .band-head { background: var(--era-future-soft); }
+
+  .node {
+    position: relative; z-index: 2; pointer-events: auto;
+    flex: 0 0 200px; min-width: 200px; max-width: 200px;
+    background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px;
+    padding: 8px 9px 7px; display: flex; flex-direction: column; gap: 5px;
+    border-left: 4px solid var(--c, var(--line-strong));
+  }
+  .node:hover { border-color: var(--accent); }
+  .node.grey { border-style: dashed; border-left-style: solid; opacity: .9; }
+  .node.grey .node-name { font-weight: 400; }
+  .node.selected { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .node.is-dragging { opacity: .4; }
+  .node.hidden-grey { display: none; }
+  .node.drop-before { box-shadow: -3px 0 0 var(--accent); }
+  .node.drop-after { box-shadow: 3px 0 0 var(--accent); }
+  .node-name { font-size: 13px; font-weight: 500; word-break: break-word; }
+  .node-when { color: var(--muted); font-size: 11.5px; }
+  .node-tools { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .mini-select {
+    appearance: none; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-2);
+    padding: 2px 5px; font-size: 11.5px; max-width: 104px;
+  }
+  .mini-tag {
+    border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-size: 11px;
+    color: var(--muted); white-space: nowrap;
+  }
+  .mini-tag.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .node-add {
+    appearance: none; pointer-events: auto; flex: 0 0 42px; min-height: 60px;
+    border: 1px dashed var(--line-strong); background: transparent; color: var(--muted);
+    border-radius: 10px; font-size: 18px; line-height: 1;
+  }
+  .node-add:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+  .port {
+    position: absolute; width: 12px; height: 12px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--accent);
+    opacity: 0; transition: opacity .12s ease; z-index: 30; cursor: crosshair; pointer-events: none;
+    transform: translate(-50%, -50%);
+  }
+  .node:hover .port { opacity: 1; pointer-events: auto; }
+  .port-top { left: 50%; top: 0; }
+  .port-bottom { left: 50%; top: 100%; }
+  .port-left { left: 0; top: 50%; }
+  .port-right { left: 100%; top: 50%; }
+
+  /* view 2: world timeline drawers */
+  .world-line { position: relative; }
+  .wgroup { position: relative; padding-left: 26px; }
+  .wgroup::before { content: ""; position: absolute; left: 7px; top: 6px; bottom: -6px; width: 2px; background: var(--line-strong); opacity: .8; }
+  .wgroup:last-child::before { bottom: 18px; }
+  .wera { position: relative; display: flex; align-items: baseline; gap: 9px; padding: 6px 0 8px; }
+  .wera-dot { position: absolute; left: -24px; top: 10px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 3px solid var(--era, var(--accent)); }
+  .wera-name { font-size: 14px; font-weight: 500; }
+  .wera-span { color: var(--muted); font-size: 11.5px; }
+  .wera-count { margin-left: auto; color: var(--muted); font-size: 11.5px; }
+  .wdrawers { display: flex; flex-direction: column; gap: 7px; padding-bottom: 12px; border-radius: 10px; }
+  .wdrawers.drop-active { background: var(--accent-soft); }
+  .drawer { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; }
+  .drawer::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--c, var(--accent)); }
+  .drawer.grey::before { opacity: .4; }
+  .drawer:hover { border-color: var(--line-strong); }
+  .drawer.selected { border-color: var(--accent); }
+  .drawer.is-dragging { opacity: .4; }
+  .drawer.hidden-grey { display: none; }
+  .drawer.drop-before::after, .drawer.drop-after::after { content: ""; position: absolute; left: 12px; right: 12px; height: 2px; background: var(--accent); z-index: 5; }
+  .drawer.drop-before::after { top: -4px; }
+  .drawer.drop-after::after { bottom: -4px; }
+  .drawer-head { appearance: none; width: 100%; border: 0; background: transparent; text-align: left; display: flex; align-items: center; gap: 8px; padding: 9px 11px 9px 14px; flex-wrap: wrap; }
+  .drawer-name { font-size: 13.5px; font-weight: 500; }
+  .drawer-when { color: var(--muted); font-size: 11.5px; }
+  .drawer-cat { color: var(--c, var(--muted)); border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; font-size: 11px; line-height: 18px; opacity: .9; }
+  .drawer-flag { color: var(--muted); font-size: 11px; }
+  .drawer-flag.on { color: var(--accent); }
+  .drawer-chev { margin-left: auto; color: var(--muted); font-size: 12px; transition: transform .18s ease; }
+  .drawer.open .drawer-chev, .drawer:hover .drawer-chev { transform: rotate(180deg); }
+  .drawer-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .22s ease; }
+  .drawer.open .drawer-body, .drawer:hover .drawer-body { grid-template-rows: 1fr; }
+  .drawer-inner { overflow: hidden; }
+  .drawer-content { padding: 2px 12px 12px 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); margin-top: 2px; }
+  .drawer-content textarea { width: 100%; min-height: 70px; resize: vertical; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; line-height: 1.6; }
+  .drawer-content textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .drawer-row { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .text-input { appearance: none; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 4px 8px; font-size: 12.5px; min-width: 0; }
+  .text-input:focus { outline: none; border-color: var(--accent); }
+  .text-input.small { max-width: 130px; }
+  .drawer-empty { color: var(--muted); font-size: 12px; padding: 4px 2px 8px; }
+
+  /* view 3: writing columns */
+  .write { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .write-outline { position: sticky; top: 70px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; max-height: calc(100vh - 100px); overflow: auto; }
+  .write-toc { display: flex; flex-direction: column; gap: 2px; }
+  .toc-era { margin: 9px 4px 3px; color: var(--muted); font-size: 11.5px; letter-spacing: .02em; }
+  .toc-item { appearance: none; border: 0; background: transparent; text-align: left; border-radius: 7px; padding: 5px 7px; color: var(--ink); font-size: 12.5px; display: flex; align-items: center; gap: 7px; }
+  .toc-item:hover { background: var(--surface-2); }
+  .toc-item.grey { color: var(--muted); }
+  .toc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--muted)); flex: none; }
+  .doc { display: flex; flex-direction: column; gap: 14px; }
+  .doc-era { display: flex; align-items: baseline; gap: 9px; padding: 4px 0 2px; color: var(--muted); font-size: 12px; border-bottom: 1px solid var(--line); }
+  .doc-era b { color: var(--ink); font-weight: 500; font-size: 13px; }
+  .doc-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .doc-card.grey { border-style: dashed; background: var(--surface-2); }
+  .doc-title { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  .doc-title h3 { margin: 0; font-size: 15px; font-weight: 500; }
+  .doc-title .tag { font-size: 11px; color: var(--c, var(--muted)); border: 1px solid currentColor; border-radius: 999px; padding: 0 8px; }
+  .doc-title .grey-tag { font-size: 11px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 999px; padding: 0 8px; }
+  .doc-text { width: 100%; min-height: 46px; resize: none; overflow: hidden; border: 1px solid transparent; background: transparent; border-radius: 8px; padding: 4px 6px; line-height: 1.85; font-size: 14px; }
+  .doc-text:hover { border-color: var(--line); }
+  .doc-text:focus { outline: none; border-color: var(--accent); background: var(--surface-2); }
+  .doc-meta { color: var(--muted); font-size: 11.5px; margin-top: 5px; }
+  .hidden-note { color: var(--muted); font-size: 12px; background: var(--surface-2); border: 1px dashed var(--line-strong); border-radius: 9px; padding: 7px 10px; }
+
+  /* sidebar */
+  .side { border-left: 1px solid var(--line); background: var(--shell); }
+  .side-tabs { display: flex; gap: 2px; padding: 10px 12px 0; border-bottom: 1px solid var(--line); }
+  .side-tabs button { appearance: none; border: 0; background: transparent; color: var(--muted); padding: 7px 12px; border-bottom: 2px solid transparent; }
+  .side-tabs button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+  .side-body { padding: 12px 14px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .panel-title { font-weight: 500; display: flex; align-items: center; gap: 7px; }
+  .panel-sub { color: var(--muted); font-size: 12.5px; margin: 3px 0 0; }
+  .field-label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .form-row { display: flex; gap: 8px; }
+  .form-row > * { flex: 1 1 0; min-width: 0; }
+  .input, .select, .textarea { appearance: none; width: 100%; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; padding: 7px 9px; min-height: 34px; }
+  .textarea { resize: vertical; min-height: 96px; line-height: 1.6; }
+  .input:focus, .select:focus, .textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; }
+  .stat-card b { display: block; font-size: 19px; font-weight: 500; }
+  .stat-card span { color: var(--muted); font-size: 11.5px; }
+  .bars { display: flex; flex-direction: column; gap: 6px; }
+  .bar-row { display: grid; grid-template-columns: 64px 1fr 28px; align-items: center; gap: 8px; font-size: 12px; }
+  .bar-track { display: block; height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+  .bar-fill { display: block; height: 100%; background: var(--c, var(--accent)); border-radius: 999px; }
+  .manage-list { display: flex; flex-direction: column; gap: 6px; }
+  .manage-row { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 5px 7px; }
+  .manage-row .input { min-height: 28px; padding: 3px 7px; font-size: 12.5px; border-color: transparent; background: transparent; }
+  .manage-row .input:hover { border-color: var(--line); }
+  .icon-btn { appearance: none; border: 1px solid transparent; background: transparent; color: var(--muted); min-width: 28px; height: 28px; border-radius: 8px; padding: 0 6px; font-size: 12.5px; }
+  .icon-btn:hover { background: var(--surface-2); color: var(--ink); border-color: var(--line); }
+  .icon-btn.danger:hover { color: var(--danger); background: var(--danger-soft); border-color: transparent; }
+  .conn-list { display: flex; flex-direction: column; gap: 5px; }
+  .conn-row { display: flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
+  .conn-row .arrow { color: var(--muted); font-size: 11px; }
+  .conn-row .conn-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .side-foot { border-top: 1px solid var(--line); padding-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(8px);
+    background: #1d2127; color: #f2f4f6; border-radius: 10px; padding: 8px 12px;
+    display: flex; align-items: center; gap: 12px; font-size: 12.5px; z-index: 60;
+    opacity: 0; pointer-events: none; transition: opacity .16s ease, transform .16s ease;
+    box-shadow: 0 10px 28px rgba(0,0,0,.3);
+  }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  .toast button { appearance: none; border: 0; background: transparent; color: #8fe3cf; padding: 0; font-size: 12.5px; }
+  @media (prefers-color-scheme: dark) { .toast { background: #eef0f3; color: #16191e; } .toast button { color: #0e7c66; } }
+
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .side { border-left: 0; border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 820px) {
+    .write { grid-template-columns: 1fr; }
+    .write-outline { position: static; max-height: none; }
+  }
+  @media (max-width: 700px) {
+    .topbar { padding: 9px 12px; gap: 9px; }
+    .top-actions { margin-left: 0; width: 100%; }
+    .view-tabs { width: 100%; }
+    .view-tabs button { flex: 1 1 auto; text-align: center; }
+    .board { padding: 12px 10px 24px; }
+    .node { flex: 1 1 100%; max-width: none; }
+    .legend, .switch { margin-left: 0; }
+    .form-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-mark">维</span>多维大纲台2</div>
+  <input id="projectTitle" aria-label="项目名" spellcheck="false">
+  <div class="view-tabs" role="group" aria-label="切换视图">
+    <button type="button" data-view="bands" aria-pressed="true" title="时代色带 + 主角折线">时代色带</button>
+    <button type="button" data-view="world" aria-pressed="false" title="世界真实发生顺序">世界时间线</button>
+    <button type="button" data-view="write" aria-pressed="false" title="左侧大纲 + 右侧正文">分栏写作</button>
+  </div>
+  <label class="switch top-switch"><input type="checkbox" id="hideGreyTop"> 隐藏灰卡</label>
+  <div class="top-actions">
+    <span class="save-note" id="saveNote">本地自动保存</span>
+    <button type="button" class="btn" id="addEraBtn">＋ 新增时代</button>
+    <button type="button" class="btn btn-primary" id="addEventBtn">＋ 新增事件</button>
+    <button type="button" class="btn" id="exportJson">导出 JSON</button>
+    <button type="button" class="btn" id="exportMd">导出 Markdown</button>
+    <button type="button" class="btn" id="importBtn">导入</button>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+</header>
+
+<div class="layout">
+  <main class="board">
+    <div class="board-head" id="boardHead"></div>
+    <div id="stage"></div>
+  </main>
+  <aside class="side">
+    <div class="side-tabs" role="group" aria-label="侧栏">
+      <button type="button" data-side="event" aria-pressed="true">事件</button>
+      <button type="button" data-side="manage" aria-pressed="false">分类与时代</button>
+    </div>
+    <div class="side-body">
+      <section id="panelEvent"></section>
+      <section id="panelManage" hidden></section>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'multi-outline2-v2';
+  var CAT_FALLBACK = ['主线', '支线', '伏笔', '回收', '逻辑补丁', '背景设定', '备选素材', '人物'];
+  var BRANCH_COLORS = ['var(--branch-1)', 'var(--branch-2)', 'var(--branch-3)', 'var(--branch-4)', 'var(--branch-5)', 'var(--branch-6)'];
+
+  var stage = document.getElementById('stage');
+  var boardHead = document.getElementById('boardHead');
+  var panelEvent = document.getElementById('panelEvent');
+  var panelManage = document.getElementById('panelManage');
+  var toastEl = document.getElementById('toast');
+  var saveNote = document.getElementById('saveNote');
+  var projectTitle = document.getElementById('projectTitle');
+  var hideGreyTop = document.getElementById('hideGreyTop');
+
+  var view = 'bands';
+  var sideTab = 'event';
+  var selectedId = null;
+  var openDrawers = {};
+  var hideGrey = false;
+  var dragState = null;
+  var linkDrag = null;
+  var bandCorridors = {};
+  var undoAction = null;
+  var toastTimer = null;
+  var saveTimer = null;
+
+  function uid(p) { return p + Math.random().toString(36).slice(2, 9); }
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pad(n) { return n < 10 ? '0' + n : String(n); }
+  function findEra(id) {
+    for (var i = 0; i < state.eras.length; i++) if (state.eras[i].id === id) return state.eras[i];
+    return state.eras[0];
+  }
+  function eraIndex(id) {
+    for (var i = 0; i < state.eras.length; i++) if (state.eras[i].id === id) return i;
+    return 0;
+  }
+  function eraColor(id) {
+    var map = { ancient: 'var(--era-ancient)', ming: 'var(--era-ming)', qing: 'var(--era-qing)', republic: 'var(--era-republic)', modern: 'var(--era-modern)', future: 'var(--era-future)' };
+    return map[id] || 'var(--accent)';
+  }
+  function findEvent(id) {
+    for (var i = 0; i < state.events.length; i++) if (state.events[i].id === id) return state.events[i];
+    return null;
+  }
+  function catColor(name) {
+    var idx = state.categories.indexOf(name);
+    if (idx < 0) idx = state.categories.length;
+    return 'var(--cat-' + ((idx % 8) + 1) + ')';
+  }
+  function byEra(eraId) {
+    return state.events.filter(function (e) { return e.eraId === eraId; }).sort(function (a, b) { return a.worldOrder - b.worldOrder; });
+  }
+  function byWorld() {
+    return state.events.slice().sort(function (a, b) {
+      var d = eraIndex(a.eraId) - eraIndex(b.eraId);
+      return d !== 0 ? d : a.worldOrder - b.worldOrder;
+    });
+  }
+  function reindexWorld(eraId) {
+    byEra(eraId).forEach(function (e, i) { e.worldOrder = i + 1; });
+  }
+  function nextWorldOrder(eraId) {
+    var list = byEra(eraId);
+    return list.length ? list[list.length - 1].worldOrder + 1 : 1;
+  }
+  function linksOf(id) {
+    return state.links.filter(function (l) { return l.from === id || l.to === id; });
+  }
+  function isOnLine(id) { return linksOf(id).length > 0; }
+  function linkById(id) {
+    for (var i = 0; i < state.links.length; i++) if (state.links[i].id === id) return state.links[i];
+    return null;
+  }
+  function linkExists(a, b) {
+    return state.links.some(function (l) { return (l.from === a && l.to === b) || (l.from === b && l.to === a); });
+  }
+  function componentColors() {
+    var parent = {};
+    state.events.forEach(function (e) { parent[e.id] = e.id; });
+    function find(x) { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    function union(a, b) { var ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; }
+    state.links.forEach(function (l) { if (parent[l.from] && parent[l.to]) union(l.from, l.to); });
+    var colors = {};
+    var roots = [];
+    state.events.forEach(function (e) {
+      var r = find(e.id);
+      if (roots.indexOf(r) < 0) roots.push(r);
+    });
+    state.events.forEach(function (e) {
+      var r = find(e.id);
+      colors[e.id] = BRANCH_COLORS[Math.max(0, roots.indexOf(r)) % BRANCH_COLORS.length];
+    });
+    return colors;
+  }
+  function flowOrderedIds() {
+    var byId = {};
+    state.events.forEach(function (e) { byId[e.id] = e; });
+    var outgoing = {};
+    var incoming = {};
+    state.events.forEach(function (e) { outgoing[e.id] = []; incoming[e.id] = 0; });
+    state.links.forEach(function (l) {
+      if (outgoing[l.from] && byId[l.to]) { outgoing[l.from].push(l.to); incoming[l.to] += 1; }
+    });
+    var seen = {};
+    var order = [];
+    function dfs(id) {
+      if (seen[id]) return;
+      seen[id] = true;
+      order.push(id);
+      (outgoing[id] || []).forEach(dfs);
+    }
+    state.events.filter(function (e) { return incoming[e.id] === 0 && outgoing[e.id].length; }).forEach(function (e) { dfs(e.id); });
+    state.events.forEach(function (e) { if (!seen[e.id] && outgoing[e.id].length) dfs(e.id); });
+    byWorld().forEach(function (e) { if (!seen[e.id]) { seen[e.id] = true; order.push(e.id); } });
+    return order;
+  }
+  function flowIndexMap() {
+    var map = {};
+    flowOrderedIds().forEach(function (id, i) { map[id] = i; });
+    return map;
+  }
+  function computeBandPlan() {
+    var CARD_W = 200;
+    var START_X = 36;
+    var PAD = 12;
+    var flowIndex = flowIndexMap();
+    var plan = {};
+    state.eras.forEach(function (era) {
+      var list = byEra(era.id).slice().sort(function (a, b) {
+        return (flowIndex[a.id] == null ? 9999 : flowIndex[a.id]) - (flowIndex[b.id] == null ? 9999 : flowIndex[b.id]);
+      });
+      var baseGaps = list.map(function (ev, i) {
+        var next = list[i + 1];
+        return next ? (linkExists(ev.id, next.id) ? 68 : 16) : 0;
+      });
+      var baseLefts = [];
+      var bx = START_X;
+      list.forEach(function (ev, i) {
+        baseLefts.push(bx);
+        bx += CARD_W + baseGaps[i];
+      });
+      plan[era.id] = { list: list, baseGaps: baseGaps, baseLefts: baseLefts };
+    });
+    // 跨色带的连线：在两张卡之间取最短路径的垂直通道。
+    bandCorridors = {};
+    state.links.forEach(function (link) {
+      var a = findEvent(link.from), b = findEvent(link.to);
+      if (!a || !b || a.eraId === b.eraId) return;
+      var pa = plan[a.eraId], pb = plan[b.eraId];
+      var ai = -1, bi = -1;
+      pa.list.forEach(function (e, i) { if (e.id === a.id) ai = i; });
+      pb.list.forEach(function (e, i) { if (e.id === b.id) bi = i; });
+      if (ai < 0 || bi < 0) return;
+      var xa = pa.baseLefts[ai] + CARD_W / 2;
+      var xb = pb.baseLefts[bi] + CARD_W / 2;
+      bandCorridors[link.id] = Math.max(0, (xa + xb) / 2);
+    });
+    // 每条色带整体顺次右移，让所有穿过它的通道落在卡片间隙里。
+    state.eras.forEach(function (era) {
+      var p = plan[era.id];
+      var idx = eraIndex(era.id);
+      var corridors = [];
+      state.links.forEach(function (link) {
+        var a = findEvent(link.from), b = findEvent(link.to);
+        if (!a || !b) return;
+        var ia = eraIndex(a.eraId), ib = eraIndex(b.eraId);
+        if (ia === ib) return;
+        if ((ia < idx && idx < ib) || (ib < idx && idx < ia)) corridors.push(bandCorridors[link.id]);
+      });
+      corridors.sort(function (a, b) { return a - b; });
+      var lefts = [];
+      var x = START_X;
+      for (var i = 0; i < p.list.length; i += 1) {
+        var moved = true;
+        while (moved) {
+          moved = false;
+          for (var ci = 0; ci < corridors.length; ci += 1) {
+            if (corridors[ci] > x - 1 && corridors[ci] < x + CARD_W + 1) {
+              x = corridors[ci] + PAD;
+              moved = true;
+              break;
+            }
+          }
+        }
+        lefts.push(x);
+        x += CARD_W + (i < p.list.length - 1 ? p.baseGaps[i] : 0);
+      }
+      p.finalLefts = lefts;
+    });
+    return plan;
+  }
+
+  function event_(data) {
+    var fallbackEra = (typeof state !== 'undefined' && state && state.eras && state.eras.length) ? state.eras[0].id : 'ancient';
+    var fallbackCat = (typeof state !== 'undefined' && state && state.categories && state.categories.length) ? state.categories[0] : '主线';
+    return {
+      id: data.id || uid('e'),
+      name: data.name || '',
+      detail: data.detail || '',
+      eraId: data.eraId || fallbackEra,
+      worldOrder: data.worldOrder || 1,
+      category: data.category || fallbackCat,
+      when: data.when || '',
+      place: data.place || ''
+    };
+  }
+
+  function defaultEras() {
+    return [
+      { id: 'ancient', name: '远古', span: '不可考' },
+      { id: 'ming', name: '明', span: '1368–1644' },
+      { id: 'qing', name: '清', span: '1644–1912' },
+      { id: 'republic', name: '民国', span: '1912–1949' },
+      { id: 'modern', name: '现代', span: '当下' },
+      { id: 'future', name: '未来', span: '未定' }
+    ];
+  }
+
+  function seedEvents() {
+    return [
+      event_({ id: 'e1', name: '地铁末班车的铜环', detail: '末班地铁上，他捡到一枚内侧刻着星图的铜环。铜环的温度会在午夜短暂升高。', eraId: 'modern', worldOrder: 1, category: '主线', when: '2024 年冬', place: '城市地铁' }),
+      event_({ id: 'e5', name: '逆向时间戳', detail: '天文台的数据里出现一个逆向时间戳，文件创建时间写着 2087 年。', eraId: 'modern', worldOrder: 2, category: '主线', when: '2024 年冬', place: '山顶天文台' }),
+      event_({ id: 'e9', name: '自己的死亡证明', detail: '租界档案馆里有一份 1943 年的死亡证明，死者是他，签名却是阿哲祖父的名字。', eraId: 'republic', worldOrder: 2, category: '主线', when: '1943 年秋', place: '上海 · 档案馆' }),
+      event_({ id: 'e2', name: '钦天监的星图', detail: '监正发现他认得一幅不该有人认得的星图，说：你不属于这个朝代。', eraId: 'ming', worldOrder: 1, category: '主线', when: '崇祯十七年春', place: '北京 · 观星台' }),
+      event_({ id: 'e6', name: '会说话的石头', detail: '运河老船工说，河底沉着一块会说话的石头，石头上的名字和他第一次穿越时用的一样。', eraId: 'qing', worldOrder: 1, category: '主线', when: '乾隆年间', place: '运河 · 夜渡' }),
+      event_({ id: 'e3', name: '照相馆里的第七次', detail: '橱窗里有一张 1937 年的合影，后排站着和他一模一样的人，照片背面写着「第七次」。', eraId: 'republic', worldOrder: 1, category: '主线', when: '1943 年夏', place: '上海 · 租界' }),
+      event_({ id: 'e4', name: '归星者', detail: '远古部落把他当作坠星的化身，祭祀用的陨石上刻着和铜环相同的星图。', eraId: 'ancient', worldOrder: 1, category: '主线', when: '不可考', place: '河谷部落' }),
+      event_({ id: 'e7', name: '量子计算机里的另一个他', detail: '未来计算机输出一段童谣，演唱者是另一个版本的他，调子来自明朝的观星台。', eraId: 'future', worldOrder: 1, category: '主线', when: '未定年', place: '冷却数据中心' }),
+      event_({ id: 'e12', name: '下一次出现', detail: '计算机推演出他的下一次出现，结果不是时间，而是一个星球坐标。', eraId: 'future', worldOrder: 2, category: '主线', when: '未定年', place: '数据中心' }),
+      event_({ id: 'e14', name: '醒来的星核', detail: '他发现自己是一颗正在醒来的星球，所有的时代都发生在它的身体里。', eraId: 'future', worldOrder: 3, category: '主线', when: '未定年', place: '星球内部' }),
+      event_({ id: 'e8', name: '碑上的三个名字', detail: '诏狱旧碑上刻着他历次用过的名字，笔迹完全不同，却都出自他手。', eraId: 'ming', worldOrder: 2, category: '支线', when: '万历四十七年', place: '北京 · 诏狱' }),
+      event_({ id: 'e10', name: '陨石上的原文', detail: '星图原本刻在陨石上，铜环只是陨石缺掉的一角。', eraId: 'ancient', worldOrder: 2, category: '支线', when: '不可考', place: '陨石坑' }),
+      event_({ id: 'e13', name: '把铜环埋进河堤', detail: '他把铜环埋进运河河堤，位置正好是后世出土石碑的地方。', eraId: 'qing', worldOrder: 2, category: '支线', when: '光绪年间', place: '运河河堤' }),
+      event_({ id: 'f1', name: '阿哲祖父的签名', detail: '死亡证明上的签名，是阿哲祖父的名字。他从未向主角提起这件事。', eraId: 'republic', worldOrder: 3, category: '伏笔', when: '1943 年秋', place: '档案馆' }),
+      event_({ id: 'f2', name: '锦衣卫密档里的拓片', detail: '密档里夹着一片星系拓片，边缘和铜环的缺角完全吻合。', eraId: 'ming', worldOrder: 3, category: '伏笔', when: '万历四十七年', place: '北京' }),
+      event_({ id: 'f3', name: '母亲公寓里的旧星图', detail: '冰箱上贴着他小时候画的星图，和铜环内侧的纹路一模一样。', eraId: 'modern', worldOrder: 3, category: '背景设定', when: '2024 年', place: '母亲的旧公寓' }),
+      event_({ id: 'f4', name: '河工名册上的同名工匠', detail: '清淤名册里有一个和他同名的工匠，签收过一批石材。', eraId: 'qing', worldOrder: 3, category: '逻辑补丁', when: '光绪年间', place: '运河工地' }),
+      event_({ id: 'f5', name: '地铁站的监控盲区', detail: '每到午夜 00:03 到 00:07，站台监控会同时黑屏四分钟。', eraId: 'modern', worldOrder: 4, category: '备选素材', when: '2024 年冬', place: '城市地铁' })
+    ];
+  }
+  function seedLinks() {
+    var pairs = [['e1', 'e5'], ['e5', 'e9'], ['e9', 'e2'], ['e2', 'e6'], ['e6', 'e3'], ['e3', 'e4'], ['e4', 'e7'], ['e7', 'e12'], ['e12', 'e14'], ['e2', 'e8'], ['e4', 'e10'], ['e6', 'e13']];
+    return pairs.map(function (p) { return { id: uid('l'), from: p[0], to: p[1], fromSide: '', toSide: '' }; });
+  }
+
+  var state = {
+    project: '《往复》· 多时空长篇',
+    categories: CAT_FALLBACK.slice(),
+    eras: defaultEras(),
+    events: seedEvents(),
+    links: seedLinks()
+  };
+
+  /* ---------- persistence ---------- */
+  function save() {
+    window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(function () {
+      try {
+        window.localStorage.setItem(STORE_KEY, JSON.stringify({
+          project: state.project, categories: state.categories, eras: state.eras, events: state.events, links: state.links
+        }));
+        var now = new Date();
+        saveNote.textContent = '已保存 ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      } catch (error) { saveNote.textContent = '本地保存不可用'; }
+    }, 300);
+  }
+  function normalize(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.events) || !Array.isArray(raw.eras) || !raw.eras.length) return null;
+    var eras = raw.eras.map(function (era, i) {
+      return { id: era.id || uid('era'), name: era.name || ('时代 ' + (i + 1)), span: era.span || '' };
+    });
+    var categories = Array.isArray(raw.categories) && raw.categories.length ? raw.categories.slice() : CAT_FALLBACK.slice();
+    var events = raw.events.map(function (item) {
+      return {
+        id: item.id || uid('e'),
+        name: item.name || '', detail: item.detail || '',
+        eraId: eras.some(function (e) { return e.id === item.eraId; }) ? item.eraId : eras[0].id,
+        worldOrder: Number(item.worldOrder) || 1,
+        category: categories.indexOf(item.category) >= 0 ? item.category : categories[0],
+        when: item.when || '', place: item.place || ''
+      };
+    });
+    var ids = events.map(function (e) { return e.id; });
+    var links = [];
+    if (Array.isArray(raw.links)) {
+      links = raw.links.filter(function (l) {
+        return l && ids.indexOf(l.from) >= 0 && ids.indexOf(l.to) >= 0 && l.from !== l.to;
+      }).map(function (l) {
+        return { id: l.id || uid('l'), from: l.from, to: l.to, fromSide: l.fromSide || '', toSide: l.toSide || '' };
+      });
+    } else {
+      raw.events.forEach(function (item) {
+        if (item && item.parentId && ids.indexOf(item.parentId) >= 0 && ids.indexOf(item.id) >= 0 && item.parentId !== item.id) {
+          links.push({ id: uid('l'), from: item.parentId, to: item.id, fromSide: '', toSide: '' });
+        }
+      });
+    }
+    return { project: raw.project || '未命名项目', categories: categories, eras: eras, events: events, links: links };
+  }
+  function load() {
+    try {
+      var parsed = JSON.parse(window.localStorage.getItem(STORE_KEY));
+      var data = normalize(parsed);
+      if (data) state = data;
+    } catch (error) {}
+  }
+
+  function showToast(message, undo) {
+    undoAction = typeof undo === 'function' ? undo : null;
+    toastEl.innerHTML = '<span>' + esc(message) + '</span>' + (undoAction ? '<button type="button" data-toast-undo>撤销</button>' : '');
+    toastEl.classList.add('on');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () { toastEl.classList.remove('on'); undoAction = null; }, 3400);
+  }
+  toastEl.addEventListener('click', function (event) {
+    if (!event.target.closest('[data-toast-undo]')) return;
+    var action = undoAction;
+    undoAction = null;
+    toastEl.classList.remove('on');
+    if (action) action();
+  });
+
+  /* ---------- common render ---------- */
+  function renderStats() {
+    var online = state.events.filter(function (e) { return isOnLine(e.id); }).length;
+    return '<b>' + state.events.length + '</b> 个小事件 · <b>' + online + '</b> 个在折线上 · <b>' + (state.events.length - online) + '</b> 张灰卡 · <b>' + state.eras.length + '</b> 个时代';
+  }
+  function categoryOptions(selected) {
+    return state.categories.map(function (name) {
+      return '<option value="' + esc(name) + '"' + (name === selected ? ' selected' : '') + '>' + esc(name) + '</option>';
+    }).join('');
+  }
+  function eraOptions(selected) {
+    return state.eras.map(function (era) {
+      return '<option value="' + esc(era.id) + '"' + (era.id === selected ? ' selected' : '') + '>' + esc(era.name) + '</option>';
+    }).join('');
+  }
+  function renderBoardHead() {
+    var html = '<div class="stats">' + renderStats() + '</div>';
+    if (hideGrey) {
+      var greyCount = state.events.filter(function (e) { return !isOnLine(e.id); }).length;
+      html += '<div class="stats">已隐藏 ' + greyCount + ' 张灰卡</div>';
+    }
+    if (view !== 'write') {
+      html += '<div class="legend"><span><i class="lg-line"></i>折线连线</span><span><i class="lg-free"></i>草灰蛇线（灰卡）</span></div>';
+    }
+    boardHead.innerHTML = html;
+  }
+
+  /* ---------- view 1: bands ---------- */
+  function portsHTML() {
+    return '<span class="port port-top" data-port="top" title="拖动连接到另一张卡"></span>' +
+      '<span class="port port-right" data-port="right" title="拖动连接到另一张卡"></span>' +
+      '<span class="port port-bottom" data-port="bottom" title="拖动连接到另一张卡"></span>' +
+      '<span class="port port-left" data-port="left" title="拖动连接到另一张卡"></span>';
+  }
+  function renderBands() {
+    var plan = computeBandPlan();
+    var html = '<div class="bands" id="bands"><svg class="traj" id="traj" aria-hidden="true"></svg>';
+    state.eras.forEach(function (era) {
+      var p = plan[era.id];
+      var list = p.list;
+      var leading = list.length ? Math.max(0, p.finalLefts[0] - 36) : 0;
+      html += '<section class="band" data-era="' + era.id + '">' +
+        '<header class="band-head"><span class="era-name">' + esc(era.name) + '</span>' +
+        '<span class="era-span">' + esc(era.span) + '</span>' +
+        '<span class="era-count">' + list.length + ' 个事件</span></header>' +
+        '<div class="band-body" data-drop-era="' + era.id + '">' +
+          (leading > 0 ? '<span class="flow-gap" style="width:' + leading + 'px"></span>' : '') +
+          list.map(function (ev, index) {
+            var on = isOnLine(ev.id);
+            var next = list[index + 1];
+            var card = '<article class="node' + (on ? '' : ' grey') + (!on && hideGrey ? ' hidden-grey' : '') + (ev.id === selectedId ? ' selected' : '') + '" data-id="' + ev.id + '" data-drag="1" draggable="true" style="--c:' + catColor(ev.category) + '">' +
+              portsHTML() +
+              '<div class="node-name">' + esc(ev.name || '未命名事件') + '</div>' +
+              '<div class="node-when">' + esc(ev.when || '时间未定') + (ev.place ? ' · ' + esc(ev.place) : '') + '</div>' +
+              '<div class="node-tools">' +
+                '<select class="mini-select" data-field="category" aria-label="事件分类">' + categoryOptions(ev.category) + '</select>' +
+                '<span class="mini-tag' + (on ? ' on' : '') + '">' + (on ? '折线' : '灰卡') + '</span>' +
+              '</div>' +
+            '</article>';
+            var gap = next ? Math.max(0, p.finalLefts[index + 1] - (p.finalLefts[index] + 200)) : 0;
+            return card + (next ? '<span class="flow-gap" style="width:' + gap + 'px"></span>' : '');
+          }).join('') +
+          '<button type="button" class="node-add" data-action="add-era-event" data-era="' + era.id + '" aria-label="在这个时代新增事件">＋</button>' +
+        '</div>' +
+      '</section>';
+    });
+    html += '</div>';
+    stage.innerHTML = html;
+    Array.prototype.forEach.call(stage.querySelectorAll('.band-body'), function (body) {
+      body.addEventListener('scroll', function () { window.requestAnimationFrame(drawTrajectory); });
+    });
+    window.requestAnimationFrame(drawTrajectory);
+  }
+
+  function anchorOf(rect, box, side) {
+    var top = rect.top - box.top, left = rect.left - box.left;
+    if (side === 'top') return { x: left + rect.width / 2, y: top };
+    if (side === 'bottom') return { x: left + rect.width / 2, y: top + rect.height };
+    if (side === 'left') return { x: left, y: top + rect.height / 2 };
+    return { x: left + rect.width, y: top + rect.height / 2 };
+  }
+  function autoSides(a, b) {
+    var dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+    var dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+    if (Math.abs(dy) >= Math.abs(dx)) return dy > 0 ? ['bottom', 'top'] : ['top', 'bottom'];
+    return dx > 0 ? ['right', 'left'] : ['left', 'right'];
+  }
+  function ctrlPoint(p, side, dist) {
+    if (side === 'top') return { x: p.x, y: p.y - dist };
+    if (side === 'bottom') return { x: p.x, y: p.y + dist };
+    if (side === 'left') return { x: p.x - dist, y: p.y };
+    return { x: p.x + dist, y: p.y };
+  }
+  function curvePath(p0, p3, s0, s1) {
+    var c1 = ctrlPoint(p0, s0, 46);
+    var c2 = ctrlPoint(p3, s1, 46);
+    return 'M ' + p0.x + ' ' + p0.y + ' C ' + c1.x + ' ' + c1.y + ', ' + c2.x + ' ' + c2.y + ', ' + p3.x + ' ' + p3.y;
+  }
+  function curveMid(p0, p3, s0, s1, rects, box) {
+    var c1 = ctrlPoint(p0, s0, 46);
+    var c2 = ctrlPoint(p3, s1, 46);
+    var candidates = [0.5, 0.35, 0.65, 0.22, 0.78, 0.12, 0.88];
+    var fallback = null;
+    for (var i = 0; i < candidates.length; i++) {
+      var t = candidates[i];
+      var mt = 1 - t;
+      var x = mt * mt * mt * p0.x + 3 * mt * mt * t * c1.x + 3 * mt * t * t * c2.x + t * t * t * p3.x;
+      var y = mt * mt * mt * p0.y + 3 * mt * mt * t * c1.y + 3 * mt * t * t * c2.y + t * t * t * p3.y;
+      if (!fallback) fallback = { x: x, y: y };
+      var absX = box.left + x, absY = box.top + y;
+      var blocked = false;
+      for (var id in rects) {
+        if (!Object.prototype.hasOwnProperty.call(rects, id)) continue;
+        var r = rects[id];
+        if (absX > r.left - 10 && absX < r.right + 10 && absY > r.top - 10 && absY < r.bottom + 10) { blocked = true; break; }
+      }
+      if (!blocked) return { x: x, y: y };
+    }
+    return fallback;
+  }
+  function rowIndexOf(rows, rect) {
+    for (var i = 0; i < rows.length; i++) {
+      if (rect.top <= rows[i].bottom + 2 && rect.bottom >= rows[i].top - 2) return i;
+    }
+    return Math.max(0, rows.length - 1);
+  }
+  function drawTrajectory() {
+    var wrap = document.getElementById('bands');
+    var svg = document.getElementById('traj');
+    if (!wrap || !svg) return;
+    var box = wrap.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    var rects = {};
+    var eraOf = {};
+    state.events.forEach(function (e) { eraOf[e.id] = e.eraId; });
+    Array.prototype.forEach.call(wrap.querySelectorAll('.node'), function (node) {
+      rects[node.getAttribute('data-id')] = node.getBoundingClientRect();
+    });
+    // 每一条时代色带里，卡片分成几行，行与行之间的空位就是折线的横向通道。
+    var bandRows = {};
+    Array.prototype.forEach.call(wrap.querySelectorAll('.band'), function (band) {
+      var eraId = band.getAttribute('data-era');
+      var list = Array.prototype.map.call(band.querySelectorAll('.node'), function (n) { return n.getBoundingClientRect(); }).sort(function (a, b) { return a.top - b.top; });
+      var rows = [];
+      list.forEach(function (r) {
+        var row = null;
+        for (var i = 0; i < rows.length; i++) {
+          if (r.top < rows[i].bottom - 4) { row = rows[i]; break; }
+        }
+        if (row) { row.top = Math.min(row.top, r.top); row.bottom = Math.max(row.bottom, r.bottom); }
+        else rows.push({ top: r.top, bottom: r.bottom });
+      });
+      bandRows[eraId] = rows;
+    });
+    function laneY(eraId, rowIndex, where) {
+      var rows = bandRows[eraId] || [];
+      var row = rows[Math.min(Math.max(rowIndex, 0), Math.max(0, rows.length - 1))];
+      if (!row) return 0;
+      return (where === 'below' ? row.bottom : row.top) - box.top + (where === 'below' ? 17 : -17);
+    }
+    var orderByBand = {};
+    Array.prototype.forEach.call(wrap.querySelectorAll('.band'), function (band) {
+      var eraId = band.getAttribute('data-era');
+      orderByBand[eraId] = Array.prototype.map.call(band.querySelectorAll('.node'), function (n) { return n.getBoundingClientRect(); }).sort(function (x, y) { return x.left - y.left; });
+    });
+    function sameRect(r1, r2) { return Math.abs(r1.left - r2.left) < 1.5 && Math.abs(r1.top - r2.top) < 1.5; }
+    function adjacentPair(eraId, a, b) {
+      var list = orderByBand[eraId] || [];
+      for (var i = 0; i < list.length - 1; i++) {
+        if (sameRect(list[i], a) && sameRect(list[i + 1], b)) return { aFirst: true };
+        if (sameRect(list[i], b) && sameRect(list[i + 1], a)) return { aFirst: false };
+      }
+      return null;
+    }
+    var corridorBase = 11;
+    var colors = componentColors();
+    var visible = '';
+    var hits = '';
+    state.links.forEach(function (link, index) {
+      var a = rects[link.from], b = rects[link.to];
+      if (!a || !b) return;
+      var aEra = eraOf[link.from], bEra = eraOf[link.to];
+      var ax = a.left - box.left + a.width / 2;
+      var bx = b.left - box.left + b.width / 2;
+      var aRow = rowIndexOf(bandRows[aEra] || [], a);
+      var bRow = rowIndexOf(bandRows[bEra] || [], b);
+      var corridorX = corridorBase + (index % 6) * 4;
+      var route;
+      var pair = aEra === bEra ? adjacentPair(aEra, a, b) : null;
+      if (pair) {
+        var pA = pair.aFirst ? a : b;
+        var pB = pair.aFirst ? b : a;
+        route = [
+          [pA.right - box.left, pA.top - box.top + pA.height / 2],
+          [pB.left - box.left, pB.top - box.top + pB.height / 2]
+        ];
+      } else if (aEra === bEra) {
+        var lane = laneY(aEra, aRow, 'below');
+        route = [[ax, a.bottom - box.top], [ax, lane], [bx, lane], [bx, b.bottom - box.top]];
+      } else {
+        var goDown = eraIndex(bEra) > eraIndex(aEra);
+        var corridor = bandCorridors[link.id] == null ? corridorX : bandCorridors[link.id];
+        var laneA = laneY(aEra, aRow, goDown ? 'below' : 'above');
+        var laneB = laneY(bEra, bRow, goDown ? 'above' : 'below');
+        route = [
+          [ax, goDown ? a.bottom - box.top : a.top - box.top],
+          [ax, laneA],
+          [corridor, laneA],
+          [corridor, laneB],
+          [bx, laneB],
+          [bx, goDown ? b.top - box.top : b.bottom - box.top]
+        ];
+      }
+      var d = route.map(function (p, i) { return (i ? 'L ' : 'M ') + p[0] + ' ' + p[1]; }).join(' ');
+      var best = { len: -1, x: route[0][0], y: route[0][1] };
+      for (var si = 0; si < route.length - 1; si++) {
+        var len = Math.abs(route[si + 1][0] - route[si][0]) + Math.abs(route[si + 1][1] - route[si][1]);
+        if (len > best.len) best = { len: len, x: (route[si][0] + route[si + 1][0]) / 2, y: (route[si][1] + route[si + 1][1]) / 2 };
+      }
+      var color = colors[link.from] || 'var(--branch-1)';
+      visible += '<path class="link-visible" d="' + d + '" stroke="' + color + '" marker-end="url(#arrow)"></path>';
+      hits += '<g class="link" data-link="' + link.id + '">' +
+        '<path class="link-hit" d="' + d + '"></path>' +
+        '<g class="link-delete" data-action="del-link" data-link="' + link.id + '" transform="translate(' + best.x + ',' + best.y + ')">' +
+          '<circle r="10"></circle><path d="M -3.5 -3.5 L 3.5 3.5 M 3.5 -3.5 L -3.5 3.5"></path>' +
+        '</g>' +
+      '</g>';
+    });
+    var temp = '';
+    if (linkDrag) {
+      var a2 = rects[linkDrag.fromId];
+      if (a2) {
+        var ax2 = a2.left - box.left + a2.width / 2;
+        var ay2 = linkDrag.side === 'top' ? a2.top - box.top : (linkDrag.side === 'bottom' ? a2.bottom - box.top : a2.top - box.top + a2.height / 2);
+        var tx = linkDrag.x - box.left;
+        var ty = linkDrag.y - box.top;
+        temp = '<path class="temp-line" d="M ' + ax2 + ' ' + ay2 + ' L ' + ax2 + ' ' + ty + ' L ' + tx + ' ' + ty + '"></path>';
+      }
+    }
+    var defs = '<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="context-stroke"></path></marker></defs>';
+    svg.setAttribute('viewBox', '0 0 ' + box.width + ' ' + box.height);
+    svg.setAttribute('width', box.width);
+    svg.setAttribute('height', box.height);
+    svg.innerHTML = defs + temp + visible + hits;
+  }
+
+  /* ---------- view 2: world timeline ---------- */
+  function renderWorld() {
+    var html = '<div class="world-line">';
+    state.eras.forEach(function (era) {
+      var list = byEra(era.id);
+      html += '<section class="wgroup" data-era="' + era.id + '">' +
+        '<div class="wera" style="--era:' + eraColor(era.id) + '">' +
+          '<span class="wera-dot"></span><span class="wera-name">' + esc(era.name) + '</span>' +
+          '<span class="wera-span">' + esc(era.span) + '</span>' +
+          '<span class="wera-count">' + list.length + ' 个事件</span></div>' +
+        '<div class="wdrawers" data-drop-era="' + era.id + '">' +
+          (list.length ? list.map(function (ev) {
+            var on = isOnLine(ev.id);
+            var open = Boolean(openDrawers[ev.id]);
+            return '<article class="drawer' + (on ? '' : ' grey') + (!on && hideGrey ? ' hidden-grey' : '') + (open ? ' open' : '') + (ev.id === selectedId ? ' selected' : '') + '" data-id="' + ev.id + '" data-drag="1" draggable="true" style="--c:' + catColor(ev.category) + '">' +
+              '<button type="button" class="drawer-head" data-action="toggle-drawer">' +
+                '<span class="drawer-name">' + esc(ev.name || '未命名事件') + '</span>' +
+                '<span class="drawer-when">' + esc(ev.when || '时间未定') + '</span>' +
+                '<span class="drawer-cat">' + esc(ev.category) + '</span>' +
+                '<span class="drawer-flag' + (on ? ' on' : '') + '">' + (on ? '折线' : '草灰蛇线') + '</span>' +
+                '<span class="drawer-chev">▾</span>' +
+              '</button>' +
+              '<div class="drawer-body"><div class="drawer-inner"><div class="drawer-content">' +
+                '<textarea data-field="detail" aria-label="事件详情" placeholder="这个小事件的详情">' + esc(ev.detail) + '</textarea>' +
+                '<div class="drawer-row">' +
+                  '<input class="text-input small" data-field="when" value="' + esc(ev.when) + '" placeholder="世界时间">' +
+                  '<input class="text-input small" data-field="place" value="' + esc(ev.place) + '" placeholder="地点">' +
+                  '<select class="mini-select" data-field="category" aria-label="分类">' + categoryOptions(ev.category) + '</select>' +
+                  '<select class="mini-select" data-field="eraId" aria-label="时代">' + eraOptions(ev.eraId) + '</select>' +
+                  '<button type="button" class="icon-btn danger" data-action="del" aria-label="删除事件">删除</button>' +
+                '</div>' +
+              '</div></div></div>' +
+            '</article>';
+          }).join('') : '<div class="drawer-empty">这个时代还没有事件。</div>') +
+          '<button type="button" class="node-add" style="align-self:flex-start" data-action="add-era-event" data-era="' + era.id + '" aria-label="新增事件">＋</button>' +
+        '</div>' +
+      '</section>';
+    });
+    html += '</div>';
+    stage.innerHTML = html;
+  }
+
+  /* ---------- view 3: writing columns ---------- */
+  function renderWrite() {
+    var list = byWorld();
+    var greyCount = list.filter(function (e) { return !isOnLine(e.id); }).length;
+    var shown = hideGrey ? list.filter(function (e) { return isOnLine(e.id); }) : list;
+    var toc = '';
+    state.eras.forEach(function (era) {
+      var eraList = shown.filter(function (e) { return e.eraId === era.id; });
+      if (!eraList.length) return;
+      toc += '<div class="toc-era">' + esc(era.name) + '</div>';
+      eraList.forEach(function (ev) {
+        toc += '<button type="button" class="toc-item' + (isOnLine(ev.id) ? '' : ' grey') + '" data-goto="' + ev.id + '">' +
+          '<span class="toc-dot" style="--c:' + catColor(ev.category) + '"></span>' +
+          '<span>' + esc(ev.name || '未命名事件') + '</span></button>';
+      });
+    });
+    var body = '';
+    state.eras.forEach(function (era) {
+      var eraList = shown.filter(function (e) { return e.eraId === era.id; });
+      if (!eraList.length) return;
+      body += '<div class="doc-era"><b>' + esc(era.name) + '</b><span>' + esc(era.span) + '</span></div>';
+      eraList.forEach(function (ev) {
+        var on = isOnLine(ev.id);
+        body += '<section class="doc-card' + (on ? '' : ' grey') + '" id="doc-' + ev.id + '" data-id="' + ev.id + '" style="--c:' + catColor(ev.category) + '">' +
+          '<div class="doc-title"><h3>' + esc(ev.name || '未命名事件') + '</h3>' +
+          '<span class="tag">' + esc(ev.category) + '</span>' +
+          (on ? '' : '<span class="grey-tag">灰卡</span>') + '</div>' +
+          '<textarea class="doc-text" data-field="detail" aria-label="事件详情">' + esc(ev.detail) + '</textarea>' +
+          '<div class="doc-meta">' + esc(ev.when || '时间未定') + (ev.place ? ' · ' + esc(ev.place) : '') + (on ? '' : ' · 暂未进入折线') + '</div>' +
+        '</section>';
+      });
+    });
+    stage.innerHTML = '<div class="write">' +
+      '<aside class="write-outline">' +
+        '<div class="toc-era" style="margin-top:0">大纲</div>' +
+        '<div class="write-toc">' + (toc || '<div class="drawer-empty">没有可显示的事件。</div>') + '</div>' +
+      '</aside>' +
+      '<div class="doc">' +
+        (hideGrey && greyCount ? '<div class="hidden-note">已隐藏 ' + greyCount + ' 张草灰蛇线灰卡。关掉上方开关可以把它们放回正文流。</div>' : '') +
+        (body || '<div class="drawer-empty">没有可显示的事件。</div>') +
+      '</div>' +
+    '</div>';
+    Array.prototype.forEach.call(stage.querySelectorAll('.doc-text'), function (ta) {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
+    Array.prototype.forEach.call(stage.querySelectorAll('[data-goto]'), function (button) {
+      button.addEventListener('click', function () {
+        var target = document.getElementById('doc-' + button.getAttribute('data-goto'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  /* ---------- sidebar ---------- */
+  function renderSidebar() {
+    var ev = selectedId ? findEvent(selectedId) : null;
+    if (sideTab === 'manage') {
+      panelEvent.hidden = true; panelManage.hidden = false; renderManage(); return;
+    }
+    panelManage.hidden = true; panelEvent.hidden = false;
+    if (!ev) { renderOverview(); return; }
+    var links = linksOf(ev.id);
+    panelEvent.innerHTML =
+      '<div><div class="panel-title">事件详情</div><p class="panel-sub">事件卡就是一个小事件：名称 + 详情，再给它一个分类。</p></div>' +
+      '<div><label class="field-label">事件名称</label><input class="input" data-ed="name" value="' + esc(ev.name) + '" placeholder="这一件事是什么"></div>' +
+      '<div><label class="field-label">事件详情</label><textarea class="textarea" data-ed="detail" placeholder="细节、因果、人物动机、伏笔…">' + esc(ev.detail) + '</textarea></div>' +
+      '<div><label class="field-label">分类</label><select class="select" data-ed="category">' + categoryOptions(ev.category) + '</select></div>' +
+      '<div><label class="field-label">时代</label><select class="select" data-ed="eraId">' + eraOptions(ev.eraId) + '</select></div>' +
+      '<div class="form-row">' +
+        '<div><label class="field-label">世界时间</label><input class="input" data-ed="when" value="' + esc(ev.when) + '" placeholder="乾隆年间"></div>' +
+        '<div><label class="field-label">地点</label><input class="input" data-ed="place" value="' + esc(ev.place) + '" placeholder="地点"></div>' +
+      '</div>' +
+      '<div><label class="field-label">连接（折线）</label><div class="conn-list">' +
+        (links.length ? links.map(function (l) {
+          var out = l.from === ev.id;
+          var other = findEvent(out ? l.to : l.from);
+          return '<div class="conn-row"><span class="arrow">' + (out ? '→' : '←') + '</span>' +
+            '<span class="conn-name">' + esc(other ? other.name || '未命名' : '已删除') + '</span>' +
+            '<button type="button" class="icon-btn danger" data-action="del-link" data-link="' + l.id + '" aria-label="删除连线">×</button></div>';
+        }).join('') : '<div class="drawer-empty">还没有连线。到时代色带里，把鼠标放在卡片边缘，拖动出现的圆点到另一张卡上。</div>') +
+      '</div></div>' +
+      '<div class="side-foot"><button type="button" class="btn btn-ghost" data-action="focus-event">在视图中定位</button>' +
+      '<button type="button" class="btn btn-danger" data-action="delete-event">删除事件</button></div>' +
+      '<div style="display:flex;align-items:center;gap:7px"><span class="drawer-cat" style="--c:' + catColor(ev.category) + '">' + esc(ev.category) + '</span>' +
+      '<span class="stats">' + esc(findEra(ev.eraId).name) + (isOnLine(ev.id) ? ' · 在折线上' : ' · 灰卡') + '</span></div>';
+  }
+  function renderOverview() {
+    var online = state.events.filter(function (e) { return isOnLine(e.id); }).length;
+    var counts = state.categories.map(function (name) {
+      return { name: name, count: state.events.filter(function (e) { return e.category === name; }).length };
+    }).filter(function (item) { return item.count > 0; }).sort(function (a, b) { return b.count - a.count; });
+    var max = counts.length ? counts[0].count : 1;
+    panelEvent.innerHTML =
+      '<div><div class="panel-title">项目总览</div><p class="panel-sub">点任意事件卡，在这里编辑它。拖动卡片边缘的圆点，可以把两张卡连起来。</p></div>' +
+      '<div class="stat-grid">' +
+        '<div class="stat-card"><b>' + state.events.length + '</b><span>事件总数</span></div>' +
+        '<div class="stat-card"><b>' + online + '</b><span>在折线上</span></div>' +
+        '<div class="stat-card"><b>' + (state.events.length - online) + '</b><span>灰卡</span></div>' +
+        '<div class="stat-card"><b>' + state.links.length + '</b><span>连线</span></div>' +
+      '</div>' +
+      '<div><div class="panel-title" style="font-size:13px">分类分布</div><div class="bars" style="margin-top:8px">' +
+        counts.map(function (item) {
+          return '<div class="bar-row"><span>' + esc(item.name) + '</span><span class="bar-track"><span class="bar-fill" style="--c:' + catColor(item.name) + ';width:' + Math.round(item.count / max * 100) + '%"></span></span><span class="stats">' + item.count + '</span></div>';
+        }).join('') +
+      '</div></div>' +
+      '<div><div class="panel-title" style="font-size:13px">时代分布</div><div class="bars" style="margin-top:8px">' +
+        state.eras.map(function (era) {
+          var n = byEra(era.id).length;
+          return '<div class="bar-row"><span>' + esc(era.name) + '</span><span class="bar-track"><span class="bar-fill" style="--c:var(--accent);width:' + Math.min(100, n * 14) + '%"></span></span><span class="stats">' + n + '</span></div>';
+        }).join('') +
+      '</div></div>';
+  }
+  function renderManage() {
+    panelManage.innerHTML =
+      '<div><div class="panel-title">分类</div><p class="panel-sub">所有事件卡都可以直接在卡片上选择这里的分类。</p></div>' +
+      '<div class="manage-list">' +
+        state.categories.map(function (name, i) {
+          return '<div class="manage-row"><span style="width:8px;height:8px;border-radius:50%;background:' + catColor(name) + ';flex:none"></span>' +
+            '<input class="input" data-cat-name="' + i + '" value="' + esc(name) + '" aria-label="分类名">' +
+            '<button type="button" class="icon-btn danger" data-action="del-cat" data-cat-index="' + i + '" aria-label="删除分类">×</button></div>';
+        }).join('') +
+      '</div>' +
+      '<div class="form-row" style="margin-top:8px"><input class="input" id="newCat" placeholder="新增分类，例如 暗线"><button type="button" class="btn" data-action="add-cat">添加</button></div>' +
+      '<div style="border-top:1px solid var(--line);margin-top:6px;padding-top:10px"><div class="panel-title">时代</div><p class="panel-sub">时代色带按这里的顺序从上到下排列，也决定世界时间线的先后。</p></div>' +
+      '<div class="manage-list">' +
+        state.eras.map(function (era) {
+          return '<div class="manage-row">' +
+            '<input class="input" data-era-name="' + era.id + '" value="' + esc(era.name) + '" aria-label="时代名" style="max-width:88px">' +
+            '<input class="input" data-era-span="' + era.id + '" value="' + esc(era.span) + '" aria-label="时代范围" placeholder="范围">' +
+            '<button type="button" class="icon-btn" data-action="era-up" data-era="' + era.id + '" aria-label="上移">↑</button>' +
+            '<button type="button" class="icon-btn" data-action="era-down" data-era="' + era.id + '" aria-label="下移">↓</button>' +
+            '<button type="button" class="icon-btn danger" data-action="del-era" data-era="' + era.id + '" aria-label="删除时代">×</button>' +
+          '</div>';
+        }).join('') +
+      '</div>' +
+      '<div class="form-row" style="margin-top:8px"><input class="input" id="newEraName" placeholder="新增时代，例如 南宋"><input class="input" id="newEraSpan" placeholder="范围，可留空"><button type="button" class="btn" data-action="add-era">添加</button></div>';
+  }
+
+  function render() {
+    projectTitle.value = state.project;
+    hideGreyTop.checked = hideGrey;
+    renderBoardHead();
+    if (view === 'world') renderWorld();
+    else if (view === 'write') renderWrite();
+    else renderBands();
+    renderSidebar();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (button) {
+      button.setAttribute('aria-pressed', button.getAttribute('data-view') === view ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-side]'), function (button) {
+      button.setAttribute('aria-pressed', button.getAttribute('data-side') === sideTab ? 'true' : 'false');
+    });
+    window.requestAnimationFrame(function () { if (view === 'bands') drawTrajectory(); });
+  }
+
+  /* ---------- actions ---------- */
+  function addEvent(eraId) {
+    var target = eraId || state.eras[0].id;
+    var ev = event_({ eraId: target, worldOrder: nextWorldOrder(target), category: state.categories[0] });
+    state.events.push(ev);
+    selectedId = ev.id;
+    sideTab = 'event';
+    openDrawers[ev.id] = true;
+    render();
+    save();
+    var input = panelEvent.querySelector('[data-ed="name"]');
+    if (input) input.focus();
+  }
+  function deleteEvent(id) {
+    var index = state.events.findIndex(function (e) { return e.id === id; });
+    if (index < 0) return;
+    var removed = state.events.splice(index, 1)[0];
+    var removedLinks = state.links.filter(function (l) { return l.from === id || l.to === id; });
+    state.links = state.links.filter(function (l) { return l.from !== id && l.to !== id; });
+    if (selectedId === id) selectedId = null;
+    render(); save();
+    showToast('已删除「' + (removed.name || '未命名事件') + '」', function () {
+      state.events.push(removed);
+      removedLinks.forEach(function (l) { state.links.push(l); });
+      reindexWorld(removed.eraId);
+      render(); save();
+    });
+  }
+  function deleteLink(id, quiet) {
+    var link = linkById(id);
+    if (!link) return;
+    state.links = state.links.filter(function (l) { return l.id !== id; });
+    render(); save();
+    if (!quiet) {
+      showToast('已删除这条连线', function () {
+        state.links.push(link);
+        render(); save();
+      });
+    }
+  }
+  function focusEvent(id) {
+    selectedId = id;
+    if (view === 'world') openDrawers[id] = true;
+    render();
+    window.requestAnimationFrame(function () {
+      var node = stage.querySelector('[data-id="' + id + '"]');
+      if (node) node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  /* ---------- pointer linking ---------- */
+  function onLinkMove(event) {
+    if (!linkDrag) return;
+    linkDrag.x = event.clientX;
+    linkDrag.y = event.clientY;
+    var hovered = document.elementFromPoint(event.clientX, event.clientY);
+    var node = hovered && hovered.closest ? hovered.closest('.node') : null;
+    Array.prototype.forEach.call(stage.querySelectorAll('.node.target'), function (n) { n.classList.remove('target'); });
+    if (node && node.getAttribute('data-id') !== linkDrag.fromId) node.classList.add('target');
+    drawTrajectory();
+  }
+  function onLinkUp(event) {
+    window.removeEventListener('pointermove', onLinkMove);
+    document.body.classList.remove('linking');
+    var hovered = document.elementFromPoint(event.clientX, event.clientY);
+    var node = hovered && hovered.closest ? hovered.closest('.node') : null;
+    var targetId = node ? node.getAttribute('data-id') : null;
+    if (linkDrag && targetId && targetId !== linkDrag.fromId && !linkExists(linkDrag.fromId, targetId)) {
+      state.links.push({ id: uid('l'), from: linkDrag.fromId, to: targetId, fromSide: linkDrag.side, toSide: '' });
+      save();
+      showToast('已连接两张卡');
+    }
+    linkDrag = null;
+    Array.prototype.forEach.call(stage.querySelectorAll('.node.target'), function (n) { n.classList.remove('target'); });
+    render();
+  }
+  stage.addEventListener('pointerdown', function (event) {
+    var port = event.target.closest('.port');
+    if (!port) return;
+    var node = port.closest('.node');
+    if (!node) return;
+    event.preventDefault();
+    event.stopPropagation();
+    linkDrag = { fromId: node.getAttribute('data-id'), side: port.getAttribute('data-port'), x: event.clientX, y: event.clientY };
+    document.body.classList.add('linking');
+    window.addEventListener('pointermove', onLinkMove);
+    window.addEventListener('pointerup', onLinkUp, { once: true });
+    drawTrajectory();
+  });
+
+  /* ---------- stage interaction ---------- */
+  stage.addEventListener('click', function (event) {
+    var actionNode = event.target.closest('[data-action]');
+    if (actionNode) {
+      var action = actionNode.getAttribute('data-action');
+      var holder = actionNode.closest('[data-id]');
+      var id = holder ? holder.getAttribute('data-id') : '';
+      if (action === 'toggle-drawer') {
+        openDrawers[id] = !openDrawers[id];
+        actionNode.closest('.drawer').classList.toggle('open', openDrawers[id]);
+        selectedId = id; renderSidebar(); return;
+      }
+      if (action === 'add-era-event') { addEvent(actionNode.getAttribute('data-era')); return; }
+      if (action === 'del-link') { deleteLink(actionNode.getAttribute('data-link')); return; }
+      if (action === 'del') { deleteEvent(id); return; }
+    }
+    var card = event.target.closest('[data-id]');
+    if (card) {
+      selectedId = card.getAttribute('data-id');
+      if (event.target.closest('input, textarea, select')) renderSidebar();
+      else render();
+    }
+  });
+  stage.addEventListener('input', function (event) {
+    var field = event.target.getAttribute('data-field');
+    if (!field) return;
+    var holder = event.target.closest('[data-id]');
+    if (!holder) return;
+    var ev = findEvent(holder.getAttribute('data-id'));
+    if (!ev) return;
+    ev[field] = event.target.value;
+    if (field === 'name') {
+      var nameNode = holder.querySelector('.node-name') || holder.querySelector('.drawer-name');
+      if (nameNode) nameNode.textContent = event.target.value;
+    }
+    if (field === 'detail' && event.target.classList.contains('doc-text')) {
+      event.target.style.height = 'auto';
+      event.target.style.height = event.target.scrollHeight + 'px';
+    }
+    save();
+  });
+  stage.addEventListener('change', function (event) {
+    var field = event.target.getAttribute('data-field');
+    if (!field) return;
+    var holder = event.target.closest('[data-id]');
+    if (!holder) return;
+    var ev = findEvent(holder.getAttribute('data-id'));
+    if (!ev) return;
+    ev[field] = event.target.value;
+    if (field === 'eraId') reindexWorld(ev.eraId);
+    render(); save();
+  });
+
+  /* ---------- drag and drop ---------- */
+  function clearMarks() {
+    Array.prototype.forEach.call(stage.querySelectorAll('.drop-before, .drop-after, .drop-active'), function (n) {
+      n.classList.remove('drop-before', 'drop-after', 'drop-active');
+    });
+    Array.prototype.forEach.call(stage.querySelectorAll('.is-dragging'), function (n) { n.classList.remove('is-dragging'); });
+  }
+  stage.addEventListener('dragstart', function (event) {
+    if (event.target.closest('.port')) { event.preventDefault(); return; }
+    var item = event.target.closest('[data-id]');
+    if (!item) return;
+    dragState = { id: item.getAttribute('data-id') };
+    item.classList.add('is-dragging');
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      try { event.dataTransfer.setData('text/plain', dragState.id); } catch (error) {}
+    }
+  });
+  stage.addEventListener('dragover', function (event) {
+    if (!dragState) return;
+    var track = event.target.closest('[data-drop-era]');
+    if (!track) return;
+    event.preventDefault();
+    clearMarks();
+    var card = event.target.closest('[data-id]');
+    if (card && card.getAttribute('data-id') !== dragState.id) {
+      var r = card.getBoundingClientRect();
+      var after = view === 'world' ? event.clientY > r.top + r.height / 2 : event.clientX > r.left + r.width / 2;
+      card.classList.add(after ? 'drop-after' : 'drop-before');
+    } else {
+      track.classList.add('drop-active');
+    }
+  });
+  stage.addEventListener('drop', function (event) {
+    if (!dragState) return;
+    var id = dragState.id;
+    var ev = findEvent(id);
+    var track = event.target.closest('[data-drop-era]');
+    var card = event.target.closest('[data-id]');
+    if (!ev || !track) { dragState = null; clearMarks(); return; }
+    event.preventDefault();
+    var targetEra = track.getAttribute('data-drop-era');
+    var oldEra = ev.eraId;
+    var list = byEra(targetEra).filter(function (e) { return e.id !== id; });
+    var at = list.length;
+    if (card && card.getAttribute('data-id') !== id) {
+      var targetIndex = -1;
+      list.forEach(function (e, i) { if (e.id === card.getAttribute('data-id')) targetIndex = i; });
+      var r = card.getBoundingClientRect();
+      var after = view === 'world' ? event.clientY > r.top + r.height / 2 : event.clientX > r.left + r.width / 2;
+      at = targetIndex < 0 ? list.length : targetIndex + (after ? 1 : 0);
+    }
+    ev.eraId = targetEra;
+    list.splice(at, 0, ev);
+    list.forEach(function (e, i) { e.worldOrder = i + 1; });
+    reindexWorld(oldEra);
+    reindexWorld(targetEra);
+    render(); save();
+    dragState = null;
+    clearMarks();
+  });
+  stage.addEventListener('dragend', function () { dragState = null; clearMarks(); });
+
+  /* ---------- sidebar events ---------- */
+  panelEvent.addEventListener('input', function (event) {
+    var key = event.target.getAttribute('data-ed');
+    if (!key) return;
+    var ev = findEvent(selectedId);
+    if (!ev) return;
+    ev[key] = event.target.value;
+    if (key === 'name') {
+      var node = stage.querySelector('[data-id="' + ev.id + '"]');
+      if (node) {
+        var nameNode = node.querySelector('.node-name') || node.querySelector('.drawer-name');
+        if (nameNode) nameNode.textContent = event.target.value;
+      }
+    }
+    save();
+  });
+  panelEvent.addEventListener('change', function (event) {
+    var key = event.target.getAttribute('data-ed');
+    if (!key) return;
+    var ev = findEvent(selectedId);
+    if (!ev) return;
+    ev[key] = event.target.value;
+    if (key === 'eraId') reindexWorld(ev.eraId);
+    render(); save();
+  });
+  panelEvent.addEventListener('click', function (event) {
+    var actionNode = event.target.closest('[data-action]');
+    if (!actionNode) return;
+    var action = actionNode.getAttribute('data-action');
+    if (action === 'delete-event') { deleteEvent(selectedId); return; }
+    if (action === 'focus-event') { focusEvent(selectedId); return; }
+    if (action === 'del-link') { deleteLink(actionNode.getAttribute('data-link')); return; }
+  });
+
+  /* ---------- manage ---------- */
+  panelManage.addEventListener('input', function (event) {
+    var catIndex = event.target.getAttribute('data-cat-name');
+    if (catIndex !== null) {
+      var oldName = state.categories[Number(catIndex)];
+      var newName = event.target.value;
+      state.categories[Number(catIndex)] = newName;
+      state.events.forEach(function (ev) { if (ev.category === oldName) ev.category = newName; });
+      save(); return;
+    }
+    var eraName = event.target.getAttribute('data-era-name');
+    if (eraName) { var era = findEra(eraName); if (era) era.name = event.target.value; save(); return; }
+    var eraSpan = event.target.getAttribute('data-era-span');
+    if (eraSpan) { var era2 = findEra(eraSpan); if (era2) era2.span = event.target.value; save(); renderBoardHead(); }
+  });
+  panelManage.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-action]');
+    if (!button) return;
+    var action = button.getAttribute('data-action');
+    if (action === 'add-cat') {
+      var input = document.getElementById('newCat');
+      var name = (input.value || '').trim();
+      if (!name) return;
+      if (state.categories.indexOf(name) >= 0) { showToast('这个分类已经存在'); return; }
+      state.categories.push(name); render(); save(); return;
+    }
+    if (action === 'del-cat') {
+      var index = Number(button.getAttribute('data-cat-index'));
+      if (state.categories.length <= 1) { showToast('至少保留一个分类'); return; }
+      var removed = state.categories[index];
+      var fallback = state.categories[index === 0 ? 1 : 0];
+      state.categories.splice(index, 1);
+      state.events.forEach(function (ev) { if (ev.category === removed) ev.category = fallback; });
+      render(); save(); return;
+    }
+    if (action === 'add-era') {
+      var nameInput = document.getElementById('newEraName');
+      var spanInput = document.getElementById('newEraSpan');
+      var eraName = (nameInput.value || '').trim();
+      if (!eraName) return;
+      state.eras.push({ id: uid('era'), name: eraName, span: (spanInput.value || '').trim() });
+      render(); save(); return;
+    }
+    var eraId = button.getAttribute('data-era');
+    if (action === 'era-up' || action === 'era-down') {
+      var from = eraIndex(eraId);
+      var to = action === 'era-up' ? from - 1 : from + 1;
+      if (to < 0 || to >= state.eras.length) return;
+      var moved = state.eras.splice(from, 1)[0];
+      state.eras.splice(to, 0, moved);
+      render(); save(); return;
+    }
+    if (action === 'del-era') {
+      if (state.eras.length <= 1) { showToast('至少保留一个时代'); return; }
+      var eraToDelete = findEra(eraId);
+      var count = byEra(eraId).length;
+      if (count && !window.confirm('「' + eraToDelete.name + '」里还有 ' + count + ' 个事件，删除后这些事件会移到第一个时代，确定吗？')) return;
+      var fallback2 = state.eras.filter(function (e) { return e.id !== eraId; })[0];
+      state.events.forEach(function (ev) { if (ev.eraId === eraId) ev.eraId = fallback2.id; });
+      state.eras = state.eras.filter(function (e) { return e.id !== eraId; });
+      reindexWorld(fallback2.id);
+      render(); save();
+    }
+  });
+
+  /* ---------- top controls ---------- */
+  projectTitle.addEventListener('input', function () { state.project = projectTitle.value; save(); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-view]'), function (button) {
+    button.addEventListener('click', function () { view = button.getAttribute('data-view'); render(); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-side]'), function (button) {
+    button.addEventListener('click', function () { sideTab = button.getAttribute('data-side'); render(); });
+  });
+  hideGreyTop.addEventListener('change', function () { hideGrey = hideGreyTop.checked; render(); });
+  document.getElementById('addEventBtn').addEventListener('click', function () { addEvent(); });
+  document.getElementById('addEraBtn').addEventListener('click', function () {
+    sideTab = 'manage'; render();
+    var input = document.getElementById('newEraName');
+    if (input) input.focus();
+  });
+
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 1200);
+  }
+  function stamp() {
+    var now = new Date();
+    return now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes());
+  }
+  document.getElementById('exportJson').addEventListener('click', function () {
+    download('多维大纲2-' + stamp() + '.json', JSON.stringify(state, null, 2), 'application/json');
+  });
+  document.getElementById('exportMd').addEventListener('click', function () {
+    var out = '# ' + state.project + '\n\n';
+    state.eras.forEach(function (era) {
+      var list = byEra(era.id).filter(function (e) { return !hideGrey || isOnLine(e.id); });
+      if (!list.length) return;
+      out += '## ' + era.name + (era.span ? '（' + era.span + '）' : '') + '\n\n';
+      list.forEach(function (ev) {
+        out += '### ' + (ev.name || '未命名事件') + '\n\n';
+        out += '- 分类：' + ev.category + ' ｜ ' + (isOnLine(ev.id) ? '在折线上' : '灰卡（草灰蛇线）') + '\n';
+        if (ev.when || ev.place) out += '- 时间地点：' + (ev.when || '时间未定') + (ev.place ? ' · ' + ev.place : '') + '\n';
+        var outs = state.links.filter(function (l) { return l.from === ev.id; }).map(function (l) { var t = findEvent(l.to); return t ? t.name : ''; }).filter(Boolean);
+        if (outs.length) out += '- 连接：' + outs.join('、') + '\n';
+        out += '\n' + (ev.detail || '') + '\n\n';
+      });
+    });
+    download('多维大纲2-' + stamp() + '.md', out, 'text/markdown');
+  });
+  document.getElementById('importBtn').addEventListener('click', function () { document.getElementById('importFile').click(); });
+  document.getElementById('importFile').addEventListener('change', function (event) {
+    var file = event.target.files && event.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = normalize(JSON.parse(String(reader.result)));
+        if (!data) throw new Error('bad');
+        state = data;
+        selectedId = null;
+        state.eras.forEach(function (era) { reindexWorld(era.id); });
+        render(); save();
+        showToast('已导入「' + file.name + '」');
+      } catch (error) {
+        showToast('读不出来，请确认是本工具导出的 JSON。');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(function () { if (view === 'bands') drawTrajectory(); }, 120);
+  });
+
+  load();
+  state.eras.forEach(function (era) { reindexWorld(era.id); });
+  render();
+})();
+</script>
+</body>
+</html>
