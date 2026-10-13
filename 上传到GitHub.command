@@ -135,6 +135,12 @@ api_login_field() { # 从 /user 响应里取 login
     | head -n 1
 }
 
+api_json_bool() { # 取响应里的 true/false 字段，例如 api_json_bool private
+  printf '%s' "$HTTP_BODY" \
+    | sed -n 's/.*"'"$1"'"[[:space:]]*:[[:space:]]*\(true\|false\).*/\1/p' \
+    | head -n 1
+}
+
 token_works() {
   [ -n "$TOKEN" ] || return 1
   api_request GET /user
@@ -167,6 +173,35 @@ has_non_ascii() { # 文件夹名里是否含中文等非 ASCII 字符
   LC_ALL=C grep -q '[^ -~]' <<ASCII_EOF
 $1
 ASCII_EOF
+}
+
+transliterate() { # 中文等非英文名字转拼音（用 macOS 自带的 Foundation 转换）
+  osascript -l JavaScript -e '
+    ObjC.import("Foundation");
+    function run(argv) {
+      var ms = $.NSMutableString.stringWithString(argv[0]);
+      var out = ms.stringByApplyingTransformReverse("Any-Latin; Latin-ASCII;", false);
+      return ObjC.unwrap(out);
+    }' "$1" 2>/dev/null
+}
+
+auto_repo_name() { # 自动取仓库名：英文直接用，中文转拼音，都不行就用日期
+  local raw="$1" slug candidate
+  slug="$(slugify "$raw")"
+  if [ -n "$slug" ] && ! has_non_ascii "$raw"; then
+    printf '%s' "$slug"
+    return 0
+  fi
+  candidate="$(transliterate "$raw")"
+  if [ -n "$candidate" ]; then
+    slug="$(slugify "$candidate")"
+  fi
+  if [ -n "$slug" ]; then
+    slug="$(slugify "${slug:0:60}")"
+    printf '%s' "$slug"
+    return 0
+  fi
+  printf 'web-%s' "$(date '+%Y%m%d-%H%M%S')"
 }
 
 url_encode_path() { # 路径按 / 分段编码，保留斜杠
@@ -264,6 +299,55 @@ git_askpass_cleanup() {
   unset UG_USERNAME UG_PASSWORD GIT_ASKPASS GIT_TERMINAL_PROMPT 2>/dev/null || true
   [ -n "${ASKPASS_FILE:-}" ] && rm -f "$ASKPASS_FILE"
   ASKPASS_FILE=""
+}
+
+is_network_error() { # 判断 git 的报错是不是网络问题（这些情况值得自动重试）
+  case "$1" in
+    *"HTTP2 framing layer"*|*"RPC failed"*|*"remote end hung up"*|*"Connection reset"*|*"early EOF"*|*"Failed to connect"*|*"Could not resolve host"*|*"Connection timed out"*|*"unable to access"*|*"GnuTLS"*|*"SSL_ERROR"*)
+      return 0
+      ;;
+    *) return 1 ;;
+  esac
+}
+
+ssh_over_443_works() { # github.com 被墙时，GitHub 的 443 端口 SSH 通道通常还能用
+  local out
+  command -v ssh >/dev/null 2>&1 || return 1
+  out="$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=8 \
+        -T -p 443 git@ssh.github.com 2>&1)"
+  case "$out" in
+    *"successfully authenticated"*|*"Hi "*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+detect_http_proxy() { # 找一个能连上 GitHub 的本机代理（Clash / Surge / V2Ray 之类）
+  local env_proxy port host system_host system_port
+  env_proxy="${https_proxy:-${HTTPS_PROXY:-${all_proxy:-${ALL_PROXY:-}}}}"
+  if [ -n "$env_proxy" ]; then
+    printf '%s' "$env_proxy"
+    return 0
+  fi
+
+  # macOS 系统代理设置（开着的话优先用）
+  system_host="$(scutil --proxy 2>/dev/null | awk -F': ' '/HTTPSProxy/{gsub(/ /,"",$2); print $2}' | head -n 1)"
+  system_port="$(scutil --proxy 2>/dev/null | awk -F': ' '/HTTPSPort/{gsub(/ /,"",$2); print $2}' | head -n 1)"
+  if [ -n "$system_host" ] && [ -n "$system_port" ]; then
+    if curl -sS -o /dev/null -m 8 -x "http://${system_host}:${system_port}" 'https://github.com/' >/dev/null 2>&1; then
+      printf 'http://%s:%s' "$system_host" "$system_port"
+      return 0
+    fi
+  fi
+
+  # 常见本地代理端口
+  for port in 7897 7890 7891 7899 1087 1080 8888 6152 8118 10809; do
+    nc -z -G 1 127.0.0.1 "$port" >/dev/null 2>&1 || continue
+    if curl -sS -o /dev/null -m 8 -x "http://127.0.0.1:$port" 'https://github.com/' >/dev/null 2>&1; then
+      printf 'http://127.0.0.1:%s' "$port"
+      return 0
+    fi
+  done
+  return 1
 }
 
 # ---------------- 开始 ----------------
@@ -421,18 +505,9 @@ fi
 
 if [ -z "$REPO" ]; then
   OWNER="$GITHUB_USER"
-  REPO="$(slugify "$FOLDER_NAME")"
-  if [ -z "$REPO" ] || has_non_ascii "$FOLDER_NAME"; then
-    say "文件夹名「${FOLDER_NAME}」不能直接作为仓库名，请取一个英文仓库名。"
-    if [ -n "$REPO" ]; then
-      say "直接按回车就用：$REPO"
-    fi
-    while :; do
-      ask_text "仓库名" "$REPO" REPO
-      REPO="$(slugify "$REPO")"
-      [ -n "$REPO" ] && break
-      warn "仓库名只能包含英文字母、数字、- _ . ，请重新输入。"
-    done
+  REPO="$(auto_repo_name "$FOLDER_NAME")"
+  if has_non_ascii "$FOLDER_NAME"; then
+    say "文件夹名是中文，自动取仓库名：$REPO"
   fi
 fi
 
@@ -440,42 +515,20 @@ while :; do
   api_request GET "/repos/$OWNER/$REPO"
 
   if [ "$HTTP_CODE" = "200" ]; then
-    if [ "$FROM_EXISTING" = "1" ] || [ "$FROM_MEMORY" = "1" ]; then
-      break
+    if [ "$(api_json_bool private)" = "true" ]; then
+      warn "这个仓库是私有的，在线预览地址打开会是 404。想公开可以在仓库 Settings 里改。"
     fi
-    warn "GitHub 上已经有一个同名仓库：$OWNER/$REPO"
-    if ask_yes "要把这个文件夹的内容推送上去吗？"; then
-      break
+    if [ "$FROM_EXISTING" != "1" ] && [ "$FROM_MEMORY" != "1" ]; then
+      say "GitHub 上已经有同名仓库，直接用它：${OWNER}/${REPO}"
     fi
-    REPO=""
-    while [ -z "$REPO" ]; do
-      ask_text "请换一个仓库名" "" REPO
-      REPO="$(slugify "$REPO")"
-    done
-    continue
+    break
   fi
 
   if [ "$HTTP_CODE" = "404" ]; then
     say "GitHub 上还没有 ${OWNER}/${REPO}，正在创建 ..."
-    if [ "$VISIBILITY_KNOWN" = "0" ]; then
-      say "公开仓库才能生成在线预览地址；私有仓库只有你自己登录 GitHub 才能看。"
-      while :; do
-        ask_text "输入 1 = 公开（可在线预览），2 = 私有" "1" vis_choice
-        case "$vis_choice" in
-          1|gongkai|public) REPO_VISIBILITY="public"; break ;;
-          2|siyou|private) REPO_VISIBILITY="private"; break ;;
-          *) warn "请输入 1 或 2。" ;;
-        esac
-      done
-      VISIBILITY_KNOWN=1
-      save_config >/dev/null 2>&1 || true
-    fi
-    if [ "$REPO_VISIBILITY" = "private" ]; then
-      is_private="true"
-    else
-      is_private="false"
-    fi
-    api_request POST /user/repos "{\"name\":\"$REPO\",\"private\":$is_private,\"auto_init\":false}"
+    # 一律建公开仓库：私有仓库没法用在线预览
+    REPO_VISIBILITY="public"
+    api_request POST /user/repos "{\"name\":\"$REPO\",\"private\":false,\"auto_init\":false}"
     case "$HTTP_CODE" in
       201)
         ok "已创建仓库 ${OWNER}/${REPO}（${REPO_VISIBILITY}）"
@@ -603,22 +656,96 @@ say ""
 say "正在上传到 $REPO_PATH ..."
 
 if [ "$USE_TOKEN_PUSH" = "1" ]; then
-  git_askpass_setup || die "准备凭据失败。"
+  # 国内网络下 HTTP/2 经常报 “Error in the HTTP2 framing layer”，统一改用 HTTP/1.1
+  git config http.version HTTP/1.1 >/dev/null 2>&1 || true
+  git config http.postBuffer 524288000 >/dev/null 2>&1 || true
+
+  EXISTING_PROXY="$(git config http.proxy 2>/dev/null || true)"
+  if [ -n "$EXISTING_PROXY" ] && curl -sS -o /dev/null -m 6 -x "$EXISTING_PROXY" 'https://github.com/' >/dev/null 2>&1; then
+    say "沿用上次的代理 ${EXISTING_PROXY}"
+  elif curl -sS -o /dev/null -m 6 'https://github.com/' >/dev/null 2>&1; then
+    # 直连没问题：清掉以前可能留下的代理设置，避免代理关掉后反而连不上
+    git config --unset http.proxy >/dev/null 2>&1 || true
+  else
+    warn "直连 github.com 不通（可能被网络拦了），正在找本机代理 ..."
+    FOUND_PROXY="$(detect_http_proxy || true)"
+    if [ -n "$FOUND_PROXY" ]; then
+      git config http.proxy "$FOUND_PROXY" >/dev/null 2>&1 || true
+      ok "找到可用代理 ${FOUND_PROXY}，改用它上传"
+    else
+      warn "没找到可用的本机代理，先直接试一次。"
+    fi
+  fi
 fi
 
-push_log="$(git push --porcelain origin "$BRANCH" 2>&1)"
-push_status=$?
-git_askpass_cleanup
+do_push() { # do_push [--force]
+  local mode="${1:-}"
+  if [ "$USE_TOKEN_PUSH" = "1" ]; then
+    if ! git_askpass_setup; then
+      push_status=1
+      push_log="准备登录凭据失败"
+      return 1
+    fi
+  fi
+  if [ -n "$mode" ]; then
+    push_log="$(LC_ALL=C git push --porcelain "$mode" origin "$BRANCH" 2>&1)"
+  else
+    push_log="$(LC_ALL=C git push --porcelain origin "$BRANCH" 2>&1)"
+  fi
+  push_status=$?
+  git_askpass_cleanup
+  return 0
+}
+
+attempt=0
+while :; do
+  attempt=$((attempt + 1))
+  do_push
+  [ "$push_status" -eq 0 ] && break
+
+  case "$push_log" in
+    *"Authentication failed"*|*"Invalid username or password"*|*"support for password authentication"*|*"Password authentication"*)
+      die "GitHub 认证失败。请删除钥匙串里的「${KEYCHAIN_SERVICE}」条目后重新运行本脚本，或在终端执行 gh auth login。"
+      ;;
+  esac
+
+  if is_network_error "$push_log" && [ "$attempt" -lt 3 ]; then
+    warn "网络中断了（第 ${attempt} 次），3 秒后自动重试 ..."
+    sleep 3
+    continue
+  fi
+  break
+done
+
+# HTTPS 完全走不通时，自动改走 GitHub 的 443 端口 SSH 通道
+if [ "$push_status" -ne 0 ] && [ "$USE_TOKEN_PUSH" = "1" ] && is_network_error "$push_log"; then
+  if ssh_over_443_works; then
+    warn "github.com 直连不通，自动改用 ssh.github.com:443 通道。"
+    REMOTE_TO_USE="ssh://git@ssh.github.com:443/${REPO_PATH}.git"
+    USE_TOKEN_PUSH=0
+    git remote set-url origin "$REMOTE_TO_USE" >/dev/null 2>&1 || true
+    do_push
+    if [ "$push_status" -ne 0 ] && is_network_error "$push_log"; then
+      sleep 3
+      do_push
+    fi
+    if [ "$push_status" -eq 0 ]; then
+      ok "已通过 SSH 通道上传成功（以后再双击会自动走这个通道）"
+    fi
+  fi
+fi
 
 if [ "$push_status" -ne 0 ]; then
   case "$push_log" in
     *"[rejected]"*|*"non-fast-forward"*|*"fetch first"*|*"remote contains work"*)
       warn "远程仓库里已经有其他提交，普通上传被拒绝。"
       if ask_yes "要用本地文件夹的内容覆盖远程吗？（远程多出来的提交会丢失）"; then
-        if [ "$USE_TOKEN_PUSH" = "1" ]; then git_askpass_setup || true; fi
-        push_log="$(git push --porcelain --force origin "$BRANCH" 2>&1)"
-        push_status=$?
-        git_askpass_cleanup
+        do_push --force
+        if [ "$push_status" -ne 0 ] && is_network_error "$push_log"; then
+          warn "网络中断了，3 秒后自动重试 ..."
+          sleep 3
+          do_push --force
+        fi
         [ "$push_status" -eq 0 ] || die "仍然推送失败：$push_log"
       else
         die "已取消，远程仓库没有变化。"
@@ -627,8 +754,17 @@ if [ "$push_status" -ne 0 ]; then
     *"Authentication failed"*|*"Invalid username or password"*|*"Password authentication"*|*"support for password authentication"*)
       die "GitHub 认证失败。请删除钥匙串里的「${KEYCHAIN_SERVICE}」条目后重新运行本脚本，或在终端执行 gh auth login。"
       ;;
-    *"Could not resolve host"*|*"Connection timed out"*|*"Failed to connect"*)
-      die "连不上 GitHub。请检查网络或代理设置后重试。"
+    *"Could not resolve host"*|*"Connection timed out"*|*"Failed to connect"*|*"HTTP2 framing layer"*|*"RPC failed"*|*"unable to access"*)
+      die "连不上 GitHub 的 Git 通道（你的网络把 github.com 拦了）。两个办法，任选一个：
+
+  1) 有代理的话：先在终端里执行 export https_proxy=http://127.0.0.1:端口 再双击本脚本；
+
+  2) 配置一次 SSH 密钥（推荐，之后一直有效）：
+     ssh-keygen -t ed25519 -C \"你的邮箱\" -f ~/.ssh/id_ed25519
+     cat ~/.ssh/id_ed25519.pub | pbcopy
+     然后打开 https://github.com/settings/keys 粘贴并保存，再双击本脚本。
+
+原始错误：${push_log}"
       ;;
     *)
       die "推送失败：$push_log"
